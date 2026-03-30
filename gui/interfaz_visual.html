@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDD MedTrack F2 - Hospital General San Carlos</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul: #1a4f8a;
+  --azul-claro: #2563a8;
+  --azul-suave: #dbeafe;
+  --verde: #166534;
+  --verde-claro: #16a34a;
+  --verde-suave: #dcfce7;
+  --rojo: #991b1b;
+  --rojo-suave: #fee2e2;
+  --gris-bg: #f3f4f6;
+  --gris-borde: #d1d5db;
+  --gris-texto: #4b5563;
+  --sombra: 0 1px 6px rgba(0,0,0,0.12);
+  --radio: 6px;
+  --fuente: 'Roboto', sans-serif;
+  --fuente-mono: 'Roboto Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--fuente); background: var(--gris-bg); color: #111827; min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+/* APP SHELL */
+.app-shell { display: grid; grid-template-columns: 210px 1fr; grid-template-rows: 55px 1fr; grid-template-areas: "topbar topbar" "sidebar main"; min-height: 100vh; }
+
+/* TOPBAR */
+.topbar { grid-area: topbar; background: var(--azul); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.topbar-brand { display: flex; align-items: center; gap: 10px; color: white; }
+.topbar-brand h1 { font-size: 16px; font-weight: 700; color: white; letter-spacing: 0.3px; }
+.topbar-brand span { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 300; display: block; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.badge-admin { background: rgba(255,255,255,0.15); color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; border: 1px solid rgba(255,255,255,0.25); }
+.btn-logout { background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: var(--fuente); transition: background 0.15s; }
+.btn-logout:hover { background: rgba(255,255,255,0.15); }
+
+/* SIDEBAR */
+.sidebar { grid-area: sidebar; background: white; border-right: 1px solid var(--gris-borde); padding: 16px 0; overflow-y: auto; }
+.sidebar-section-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; text-transform: uppercase; padding: 10px 16px 4px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; cursor: pointer; transition: all 0.12s; border-left: 3px solid transparent; color: var(--gris-texto); font-size: 13px; }
+.nav-item:hover { background: var(--azul-suave); color: var(--azul); }
+.nav-item.activo { background: var(--azul-suave); color: var(--azul); font-weight: 500; border-left-color: var(--azul); }
+
+/* MAIN */
+.main-content { grid-area: main; padding: 24px 28px; overflow-y: auto; }
+.page { display: none; }
+.page.visible { display: block; }
+.section-header { margin-bottom: 20px; border-bottom: 2px solid var(--gris-borde); padding-bottom: 10px; }
+.section-header h2 { font-size: 18px; font-weight: 700; color: var(--azul); }
+.section-header p { color: var(--gris-texto); margin-top: 3px; font-size: 12.5px; }
+
+/* STATS */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.stat-card { background: white; border-radius: var(--radio); padding: 16px; box-shadow: var(--sombra); border: 1px solid var(--gris-borde); border-top: 3px solid var(--azul); }
+.stat-card.verde { border-top-color: var(--verde-claro); }
+.stat-card.rojo { border-top-color: var(--rojo); }
+.stat-card.naranja { border-top-color: #d97706; }
+.stat-info .valor { font-size: 26px; font-weight: 700; color: #111827; }
+.stat-info .etiqueta { font-size: 11px; color: var(--gris-texto); margin-top: 2px; }
+
+/* TABLAS */
+.tabla-wrapper { background: white; border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); overflow: hidden; }
+.tabla-header { padding: 12px 16px; border-bottom: 1px solid var(--gris-borde); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #f9fafb; }
+.tabla-header h3 { font-size: 13px; font-weight: 600; }
+.search-box { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid var(--gris-borde); border-radius: 4px; padding: 5px 10px; width: 200px; }
+.search-box input { border: none; background: transparent; outline: none; font-family: var(--fuente); font-size: 12px; color: #111827; width: 100%; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #f9fafb; padding: 9px 14px; text-align: left; font-size: 10.5px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--gris-borde); }
+td { padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #1f2937; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f9fafb; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10.5px; font-weight: 600; }
+.badge-ok { background: var(--verde-suave); color: var(--verde); }
+.badge-alerta { background: var(--rojo-suave); color: var(--rojo); }
+.badge-tipo01 { background: #dbeafe; color: #1e40af; }
+.badge-tipo02 { background: #dcfce7; color: #166534; }
+.badge-tipo03 { background: #fef3c7; color: #92400e; }
+.badge-tipo04 { background: #f3e8ff; color: #6b21a8; }
+.badge-dep { background: #fce7f3; color: #9d174d; font-family: var(--fuente-mono); font-size: 10px; }
+
+/* FORMULARIOS */
+.form-card { background: white; border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); padding: 18px; margin-bottom: 16px; }
+.form-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: #374151; border-bottom: 1px solid var(--gris-borde); padding-bottom: 8px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.form-group label { display: block; font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.form-group input, .form-group select { width: 100%; border: 1px solid var(--gris-borde); border-radius: 4px; padding: 7px 10px; font-family: var(--fuente); font-size: 13px; color: #111827; background: white; outline: none; transition: border-color 0.15s; }
+.form-group input:focus, .form-group select:focus { border-color: var(--azul-claro); }
+.form-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+/* BOTONES */
+.btn { padding: 7px 14px; border-radius: 4px; font-family: var(--fuente); font-size: 12.5px; font-weight: 500; cursor: pointer; border: none; transition: all 0.12s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--azul); color: white; }
+.btn-primary:hover { background: var(--azul-claro); }
+.btn-success { background: var(--verde-claro); color: white; }
+.btn-success:hover { background: var(--verde); }
+.btn-danger { background: var(--rojo); color: white; }
+.btn-danger:hover { background: #7f1d1d; }
+.btn-secondary { background: white; color: var(--gris-texto); border: 1px solid var(--gris-borde); }
+.btn-secondary:hover { background: var(--gris-bg); }
+.btn-report { background: #6b21a8; color: white; }
+.btn-report:hover { background: #581c87; }
+
+/* ALERTAS */
+.alert-stock { background: #fffbeb; border: 1px solid #fbbf24; border-radius: var(--radio); padding: 10px 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; }
+
+/* LOGIN */
+.login-page { min-height: 100vh; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-family: var(--fuente); }
+.login-card { background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 400px; overflow: hidden; border: 1px solid var(--gris-borde); }
+.login-header { background: var(--azul); padding: 24px 28px; text-align: center; color: white; }
+.login-header h2 { font-size: 20px; font-weight: 700; }
+.login-header p { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+.login-tabs { display: flex; border-bottom: 1px solid var(--gris-borde); }
+.login-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 12.5px; font-weight: 500; color: var(--gris-texto); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.login-tab.activo { color: var(--azul); border-bottom-color: var(--azul); font-weight: 600; }
+.login-body { padding: 24px 28px; }
+.login-body .form-group { margin-bottom: 14px; }
+.login-body .form-group label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
+.login-body .form-group input { width: 100%; border: 1px solid var(--gris-borde); border-radius: 4px; padding: 9px 12px; font-family: var(--fuente); font-size: 13.5px; outline: none; transition: border-color 0.15s; }
+.login-body .form-group input:focus { border-color: var(--azul-claro); }
+.btn-login { width: 100%; padding: 10px; background: var(--azul); color: white; border: none; border-radius: 4px; font-family: var(--fuente); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 4px; }
+.btn-login:hover { background: var(--azul-claro); }
+.error-msg { color: var(--rojo); font-size: 12px; margin-top: 8px; text-align: center; min-height: 16px; }
+
+/* OTROS */
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.report-card { background: white; border-radius: var(--radio); box-shadow: var(--sombra); border: 1px solid var(--gris-borde); padding: 18px; text-align: center; cursor: pointer; transition: box-shadow 0.15s; }
+.report-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.report-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.report-card p { font-size: 11.5px; color: var(--gris-texto); }
+.report-card .btn { margin-top: 12px; width: 100%; justify-content: center; }
+.info-row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f3f4f6; }
+.info-row:last-child { border-bottom: none; }
+.info-key { font-weight: 600; font-size: 12.5px; min-width: 160px; color: #4b5563; }
+.info-val { font-size: 12.5px; color: #111827; }
+.matriz-table th { background: var(--azul); color: white; text-transform: none; font-size: 11.5px; }
+.matriz-table td { text-align: center; font-family: var(--fuente-mono); }
+.celda-cero { color: #d1d5db; }
+.celda-valor { color: var(--azul); font-weight: 700; background: var(--azul-suave); }
+.resultado-busqueda { background: var(--azul-suave); border: 1px solid #93c5fd; border-radius: var(--radio); padding: 12px 16px; margin: 10px 0; font-size: 13px; line-height: 1.7; display: none; }
+.resultado-busqueda.visible { display: block; }
+.resultado-busqueda.error { background: var(--rojo-suave); border-color: #fca5a5; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pantalla-login" class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <h2>Hospital General San Carlos</h2>
+      <p>Sistema EDD MedTrack - Fase 2</p>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab activo" onclick="tabLogin('login')">Iniciar Sesion</div>
+      <div class="login-tab" onclick="tabLogin('registro')">Registro</div>
+      <div class="login-tab" onclick="tabLogin('info')">Informacion</div>
+    </div>
+    <div class="login-body">
+      <div id="tab-login">
+        <div class="form-group"><label>Numero de Colegio / Usuario</label><input type="text" id="inp-usuario" placeholder="Ej: admin o COL-00051" /></div>
+        <div class="form-group"><label>Contrasena</label><input type="password" id="inp-pass" placeholder="Contrasena" onkeydown="if(event.key==='Enter') intentarLogin()" /></div>
+        <button class="btn-login" onclick="intentarLogin()">Ingresar al Sistema</button>
+        <div class="error-msg" id="error-login"></div>
+      </div>
+      <div id="tab-registro" style="display:none">
+        <div class="form-group"><label>Numero de Colegio</label><input type="text" id="reg-col" placeholder="COL-XXXXX" /></div>
+        <div class="form-group"><label>Nombre Completo</label><input type="text" id="reg-nom" placeholder="Nombre y apellidos" /></div>
+        <div class="form-group"><label>Tipo de Usuario</label>
+          <select id="reg-tipo">
+            <option value="TIPO-01">TIPO-01 - Medico General</option>
+            <option value="TIPO-02">TIPO-02 - Medico Especialista</option>
+            <option value="TIPO-03">TIPO-03 - Enfermero/a</option>
+            <option value="TIPO-04">TIPO-04 - Tecnico de Laboratorio</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Departamento</label>
+          <select id="reg-dep">
+            <option value="DEP-MED">DEP-MED</option>
+            <option value="DEP-CIR">DEP-CIR</option>
+            <option value="DEP-LAB">DEP-LAB</option>
+            <option value="DEP-FAR">DEP-FAR</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Especialidad (opcional)</label><input type="text" id="reg-esp" placeholder="Ej: Cardiologia" /></div>
+        <div class="form-group"><label>Contrasena</label><input type="password" id="reg-pass" placeholder="Minimo 6 caracteres" /></div>
+        <button class="btn-login" style="background:var(--verde-claro)" onclick="registrarUsuario()">Registrar Usuario</button>
+        <div class="error-msg" id="msg-registro"></div>
+      </div>
+      <div id="tab-info" style="display:none">
+        <div class="info-row"><span class="info-key">Sistema:</span><span class="info-val">EDD MedTrack F2 EST</span></div>
+        <div class="info-row"><span class="info-key">Curso:</span><span class="info-val">Estructuras de Datos - USAC</span></div>
+        <div class="info-row"><span class="info-key">Facultad:</span><span class="info-val">Ingenieria en Ciencias y Sistemas</span></div>
+        <div class="info-row"><span class="info-key">Lenguaje:</span><span class="info-val">Perl 5 + GTK3</span></div>
+        <div class="info-row"><span class="info-key">Reportes:</span><span class="info-val">Graphviz (dot)</span></div>
+        <div class="info-row"><span class="info-key">Estructuras:</span><span class="info-val">BST, AVL, Arbol B, Lista Doble, Lista Circ. Doble, Matriz Dispersa</span></div>
+        <div class="info-row"><span class="info-key">Version:</span><span class="info-val">2.0 (Fase 2)</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app-principal" style="display:none">
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div><h1>MedTrack F2</h1><span>Hospital General San Carlos</span></div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge-admin" id="badge-rol">Administrador</span>
+      <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesion</button>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="sidebar-section-label">General</div>
+    <div class="nav-item activo" onclick="mostrarPagina('dashboard',this)">Inicio</div>
+    <div class="sidebar-section-label menu-admin">Inventario</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('equipos',this)">Equipos (BST)</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('suministros',this)">Suministros (Arbol B)</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('medicamentos',this)">Medicamentos</div>
+    <div class="sidebar-section-label menu-admin">Personal</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('personal',this)">Personal Medico (AVL)</div>
+    <div class="sidebar-section-label menu-admin">Carga de Datos</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('carga-inv',this)">Carga Inventario JSON</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('carga-usr',this)">Carga Usuarios JSON</div>
+    <div class="sidebar-section-label menu-admin">Analisis</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('matriz',this)">Matriz Proveedor/Fab.</div>
+    <div class="nav-item menu-admin" onclick="mostrarPagina('reportes',this)">Reportes Graphviz</div>
+    <div class="sidebar-section-label menu-usuario" style="display:none">Mi Cuenta</div>
+    <div class="nav-item menu-usuario" style="display:none" onclick="mostrarPagina('perfil',this)">Mi Perfil</div>
+    <div class="nav-item menu-usuario" id="nav-med" style="display:none" onclick="mostrarPagina('u-medicamentos',this)">Medicamentos</div>
+    <div class="nav-item menu-usuario" id="nav-equ" style="display:none" onclick="mostrarPagina('u-equipos',this)">Equipos</div>
+    <div class="nav-item menu-usuario" id="nav-sum" style="display:none" onclick="mostrarPagina('u-suministros',this)">Suministros</div>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page visible">
+      <div class="section-header"><h2>Panel de Control</h2><p>Vista general del inventario hospitalario.</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-info"><div class="valor" id="cnt-equipos">0</div><div class="etiqueta">Equipos (BST)</div></div></div>
+        <div class="stat-card verde"><div class="stat-info"><div class="valor" id="cnt-suministros">0</div><div class="etiqueta">Suministros (Arbol B)</div></div></div>
+        <div class="stat-card rojo"><div class="stat-info"><div class="valor" id="cnt-medicamentos">0</div><div class="etiqueta">Medicamentos (Lista Doble)</div></div></div>
+        <div class="stat-card naranja"><div class="stat-info"><div class="valor" id="cnt-personal">0</div><div class="etiqueta">Personal Medico (AVL)</div></div></div>
+        <div class="stat-card"><div class="stat-info"><div class="valor" id="cnt-proveedores">0</div><div class="etiqueta">Proveedores activos</div></div></div>
+        <div class="stat-card rojo"><div class="stat-info"><div class="valor" id="cnt-alertas">0</div><div class="etiqueta">Alertas stock bajo</div></div></div>
+      </div>
+      <div class="alert-stock" id="alerta-stock" style="display:none"><span>AVISO:</span><span id="txt-alerta"></span></div>
+    </div>
+
+    <!-- EQUIPOS BST -->
+    <div id="page-equipos" class="page">
+      <div class="section-header"><h2>Inventario de Equipos Medicos</h2><p>Arbol BST - ordenado por codigo numerico.</p></div>
+      <div class="form-card">
+        <h3>Registrar / Buscar / Eliminar Equipo</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Codigo</label><input type="number" id="eq-cod" placeholder="Ej: 51" /></div>
+          <div class="form-group"><label>Nombre</label><input type="text" id="eq-nom" placeholder="Ej: Camilla" /></div>
+          <div class="form-group"><label>Fabricante</label><input type="text" id="eq-fab" /></div>
+          <div class="form-group"><label>Precio Unitario (Q)</label><input type="number" id="eq-prec" step="0.01" /></div>
+          <div class="form-group"><label>Cantidad</label><input type="number" id="eq-cant" /></div>
+          <div class="form-group"><label>Fecha de Ingreso</label><input type="date" id="eq-fecha" /></div>
+          <div class="form-group"><label>Nivel Minimo</label><input type="number" id="eq-nivel" /></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-success" onclick="insertarEquipo()">+ Insertar</button>
+          <button class="btn btn-primary" onclick="buscarEquipo()">Buscar</button>
+          <button class="btn btn-danger" onclick="eliminarEquipo()">Eliminar</button>
+          <select id="eq-recorrido" class="btn btn-secondary" style="padding:7px 10px"><option value="inorden">In-Orden</option><option value="preorden">Pre-Orden</option><option value="postorden">Post-Orden</option></select>
+          <button class="btn btn-secondary" onclick="verRecorridoBST()">Ver Recorrido</button>
+        </div>
+        <div id="res-equipo" class="resultado-busqueda"></div>
+      </div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Listado de Equipos</h3><div class="search-box"><input placeholder="Buscar..." oninput="filtrarTabla('tabla-equipos',this.value)" /></div></div>
+        <table id="tabla-equipos"><thead><tr><th>Codigo</th><th>Nombre</th><th>Fabricante</th><th>Precio</th><th>Cantidad</th><th>F. Ingreso</th><th>Niv. Min.</th><th>Estado</th></tr></thead><tbody id="body-equipos"></tbody></table>
+      </div>
+    </div>
+
+    <!-- SUMINISTROS -->
+    <div id="page-suministros" class="page">
+      <div class="section-header"><h2>Inventario de Suministros</h2><p>Arbol B de Orden 4 - multiples claves por nodo.</p></div>
+      <div class="form-card">
+        <h3>Registrar / Buscar / Eliminar Suministro</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>Codigo</label><input type="number" id="su-cod" /></div>
+          <div class="form-group"><label>Nombre</label><input type="text" id="su-nom" /></div>
+          <div class="form-group"><label>Fabricante</label><input type="text" id="su-fab" /></div>
+          <div class="form-group"><label>Precio (Q)</label><input type="number" id="su-prec" step="0.01" /></div>
+          <div class="form-group"><label>Cantidad</label><input type="number" id="su-cant" /></div>
+          <div class="form-group"><label>Fecha Vencimiento</label><input type="date" id="su-fecha" /></div>
+          <div class="form-group"><label>Nivel Minimo</label><input type="number" id="su-nivel" /></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-success" onclick="insertarSuministro()">+ Insertar</button>
+          <button class="btn btn-primary" onclick="buscarSuministro()">Buscar</button>
+          <button class="btn btn-danger" onclick="eliminarSuministro()">Eliminar</button>
+          <button class="btn btn-secondary" onclick="verRecorridoB()">Ver In-Orden</button>
+        </div>
+        <div id="res-suministro" class="resultado-busqueda"></div>
+      </div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Listado de Suministros</h3><div class="search-box"><input placeholder="Buscar..." oninput="filtrarTabla('tabla-suministros',this.value)" /></div></div>
+        <table id="tabla-suministros"><thead><tr><th>Codigo</th><th>Nombre</th><th>Fabricante</th><th>Precio</th><th>Cantidad</th><th>F. Venc.</th><th>Niv. Min.</th><th>Estado</th></tr></thead><tbody id="body-suministros"></tbody></table>
+      </div>
+    </div>
+
+    <!-- MEDICAMENTOS -->
+    <div id="page-medicamentos" class="page">
+      <div class="section-header"><h2>Medicamentos</h2><p>Lista doblemente enlazada - ordenada por codigo.</p></div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Medicamentos</h3><div class="search-box"><input placeholder="Buscar..." oninput="filtrarTabla('tabla-medicamentos',this.value)" /></div></div>
+        <table id="tabla-medicamentos"><thead><tr><th>Codigo</th><th>Nombre</th><th>Principio Activo</th><th>Fabricante</th><th>Precio</th><th>Cantidad</th><th>Vencimiento</th><th>Niv. Min.</th><th>Estado</th></tr></thead><tbody id="body-medicamentos"></tbody></table>
+      </div>
+    </div>
+
+    <!-- PERSONAL AVL -->
+    <div id="page-personal" class="page">
+      <div class="section-header"><h2>Personal Medico</h2><p>Arbol AVL - ordenado por numero de colegio.</p></div>
+      <div class="form-card">
+        <h3>Buscar / Eliminar Usuario</h3>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-group" style="flex:1;min-width:180px"><label>Numero de Colegio</label><input type="text" id="avl-buscar" placeholder="COL-XXXXX" /></div>
+          <div class="form-actions" style="margin-top:0">
+            <button class="btn btn-primary" onclick="buscarPersonal()">Buscar</button>
+            <button class="btn btn-danger" onclick="eliminarPersonal()">Eliminar</button>
+            <select id="avl-recorrido" class="btn btn-secondary" style="padding:7px 10px"><option value="inorden">In-Orden</option><option value="preorden">Pre-Orden</option><option value="postorden">Post-Orden</option></select>
+            <button class="btn btn-secondary" onclick="verRecorridoAVL()">Ver Recorrido</button>
+            <select id="avl-filtro" class="btn btn-secondary" style="padding:7px 10px"><option value="">Todos los dep.</option><option value="DEP-MED">DEP-MED</option><option value="DEP-CIR">DEP-CIR</option><option value="DEP-LAB">DEP-LAB</option><option value="DEP-FAR">DEP-FAR</option></select>
+            <button class="btn btn-secondary" onclick="filtrarPersonal()">Filtrar</button>
+          </div>
+        </div>
+        <div id="res-personal" class="resultado-busqueda"></div>
+      </div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Personal Medico (In-Orden AVL)</h3></div>
+        <table id="tabla-personal"><thead><tr><th>N. Colegio</th><th>Nombre</th><th>Tipo</th><th>Departamento</th><th>Especialidad</th></tr></thead><tbody id="body-personal"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CARGA INVENTARIO -->
+    <div id="page-carga-inv" class="page">
+      <div class="section-header"><h2>Carga Masiva de Inventario JSON</h2><p>Seleccione un archivo JSON con la estructura de proveedores y entregas.</p></div>
+      <div class="form-card">
+        <h3>Seleccionar Archivo</h3>
+        <input type="file" id="file-inv" accept=".json" style="margin-bottom:12px;font-size:13px" onchange="cargarInventarioJSON(this)" />
+        <div id="log-inv" style="background:var(--gris-bg);border-radius:4px;padding:14px;font-family:var(--fuente-mono);font-size:12px;line-height:1.7;border:1px solid var(--gris-borde);white-space:pre-wrap;max-height:280px;overflow-y:auto">Esperando archivo...</div>
+      </div>
+    </div>
+
+    <!-- CARGA USUARIOS -->
+    <div id="page-carga-usr" class="page">
+      <div class="section-header"><h2>Carga Masiva de Usuarios JSON</h2><p>Seleccione un archivo JSON con la estructura de usuarios departamentales.</p></div>
+      <div class="form-card">
+        <h3>Seleccionar Archivo</h3>
+        <input type="file" id="file-usr" accept=".json" style="margin-bottom:12px;font-size:13px" onchange="cargarUsuariosJSON(this)" />
+        <div id="log-usr" style="background:var(--gris-bg);border-radius:4px;padding:14px;font-family:var(--fuente-mono);font-size:12px;line-height:1.7;border:1px solid var(--gris-borde);white-space:pre-wrap;max-height:280px;overflow-y:auto">Esperando archivo...</div>
+      </div>
+    </div>
+
+    <!-- MATRIZ -->
+    <div id="page-matriz" class="page">
+      <div class="section-header"><h2>Matriz Dispersa - Proveedor vs. Fabricante</h2><p>Solo se muestran celdas con valor mayor a 0.</p></div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Relaciones Activas</h3></div>
+        <div style="overflow-x:auto"><table class="matriz-table" id="tabla-matriz"><thead id="head-matriz"></thead><tbody id="body-matriz"><tr><td style="padding:18px;color:#9ca3af">Cargue inventario primero.</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="page-reportes" class="page">
+      <div class="section-header"><h2>Reportes Graphviz</h2><p>Visualizacion de las estructuras de datos del sistema.</p></div>
+      <div class="report-grid">
+        <div class="report-card"><h4>Arbol AVL</h4><p>Personal Medico<br><small>Nodos circulares - azul</small></p><button class="btn btn-report" onclick="reporteAVL()">Ver Reporte</button></div>
+        <div class="report-card"><h4>Arbol BST</h4><p>Equipos Medicos<br><small>Nodos rectangulares - verde</small></p><button class="btn btn-report" onclick="reporteBST()">Ver Reporte</button></div>
+        <div class="report-card"><h4>Arbol B Orden 4</h4><p>Suministros<br><small>Bloques segmentados</small></p><button class="btn btn-report" onclick="reporteArbolB()">Ver Reporte</button></div>
+        <div class="report-card"><h4>Matriz Dispersa</h4><p>Proveedor vs. Fabricante</p><button class="btn btn-report" onclick="reporteMatriz()">Ver Reporte</button></div>
+        <div class="report-card"><h4>Medicamentos</h4><p>Lista Doblemente Enlazada</p><button class="btn btn-report" onclick="reporteMed()">Ver Reporte</button></div>
+        <div class="report-card"><h4>Proveedores</h4><p>Lista Circular Doble</p><button class="btn btn-report" onclick="reporteProv()">Ver Reporte</button></div>
+      </div>
+      <div id="area-reporte" style="margin-top:20px;background:white;border-radius:var(--radio);border:1px solid var(--gris-borde);padding:18px;min-height:180px;overflow-x:auto;display:none"></div>
+    </div>
+
+    <!-- PERFIL -->
+    <div id="page-perfil" class="page">
+      <div class="section-header"><h2>Mi Perfil</h2></div>
+      <div class="form-card" style="max-width:460px">
+        <h3>Informacion Registrada</h3>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <div class="form-group"><label>Numero de Colegio</label><input type="text" id="perf-col" disabled style="background:#f3f4f6" /></div>
+          <div class="form-group"><label>Nombre Completo</label><input type="text" id="perf-nom" /></div>
+          <div class="form-group"><label>Departamento</label><input type="text" id="perf-dep" disabled style="background:#f3f4f6" /></div>
+          <div class="form-group"><label>Tipo de Usuario</label><input type="text" id="perf-tipo" disabled style="background:#f3f4f6" /></div>
+          <div class="form-group"><label>Nueva Contrasena</label><input type="password" id="perf-pass" placeholder="Dejar vacio para no cambiar" /></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-success" onclick="guardarPerfil()">Guardar Cambios</button></div>
+        <div id="msg-perfil" style="font-size:12px;margin-top:8px;color:var(--verde-claro)"></div>
+      </div>
+    </div>
+
+    <!-- USUARIO: MEDICAMENTOS -->
+    <div id="page-u-medicamentos" class="page">
+      <div class="section-header"><h2>Consultar Medicamentos</h2></div>
+      <div class="form-card">
+        <h3>Buscar por Codigo</h3>
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div class="form-group" style="flex:1"><label>Codigo</label><input type="number" id="u-med-cod" /></div>
+          <button class="btn btn-primary" onclick="usuarioBuscarMed()">Buscar</button>
+        </div>
+        <div id="res-u-med" class="resultado-busqueda"></div>
+      </div>
+      <div class="tabla-wrapper">
+        <div class="tabla-header"><h3>Medicamentos disponibles</h3></div>
+        <table><thead><tr><th>Codigo</th><th>Nombre</th><th>Principio Activo</th><th>Cantidad</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody id="body-u-med"></tbody></table>
+      </div>
+    </div>
+
+    <!-- USUARIO: EQUIPOS -->
+    <div id="page-u-equipos" class="page">
+      <div class="section-header"><h2>Consultar Equipos</h2></div>
+      <div class="form-card">
+        <h3>Buscar por Codigo en BST</h3>
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div class="form-group" style="flex:1"><label>Codigo</label><input type="number" id="u-eq-cod" /></div>
+          <button class="btn btn-primary" onclick="usuarioBuscarEquipo()">Buscar</button>
+        </div>
+        <div id="res-u-eq" class="resultado-busqueda"></div>
+      </div>
+    </div>
+
+    <!-- USUARIO: SUMINISTROS -->
+    <div id="page-u-suministros" class="page">
+      <div class="section-header"><h2>Consultar Suministros</h2></div>
+      <div class="form-card">
+        <h3>Buscar por Codigo en Arbol B</h3>
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <div class="form-group" style="flex:1"><label>Codigo</label><input type="number" id="u-su-cod" /></div>
+          <button class="btn btn-primary" onclick="usuarioBuscarSuministro()">Buscar</button>
+        </div>
+        <div id="res-u-su" class="resultado-busqueda"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<script>
+const DB = { equipos:[], suministros:[], medicamentos:[], personal:[], proveedores:[], matriz:{} };
+let usuarioActual = null;
+const PERMISOS = {
+  'DEP-MED':{medicamentos:true,suministros:true,equipos:false},
+  'DEP-CIR':{medicamentos:false,suministros:true,equipos:true},
+  'DEP-LAB':{medicamentos:false,suministros:false,equipos:true},
+  'DEP-FAR':{medicamentos:true,suministros:false,equipos:false},
+  'DEP-ADM':{medicamentos:true,suministros:true,equipos:true}
+};
+
+function tabLogin(tab){
+  ['login','registro','info'].forEach(t=>{ document.getElementById('tab-'+t).style.display=t===tab?'':'none'; });
+  document.querySelectorAll('.login-tab').forEach((el,i)=>{ el.classList.toggle('activo',['login','registro','info'][i]===tab); });
+}
+
+function intentarLogin(){
+  const usr=document.getElementById('inp-usuario').value.trim();
+  const pass=document.getElementById('inp-pass').value;
+  const err=document.getElementById('error-login');
+  if(usr==='admin'&&pass==='123'){ err.textContent=''; abrirComoAdmin(); return; }
+  const u=DB.personal.find(p=>p.numero_colegio===usr&&p.contrasena===pass);
+  if(u){ err.textContent=''; abrirComoUsuario(u); }
+  else err.textContent='Credenciales incorrectas. Verifique su numero de colegio y contrasena.';
+}
+
+function abrirComoAdmin(){
+  document.getElementById('pantalla-login').style.display='none';
+  document.getElementById('app-principal').style.display='block';
+  document.getElementById('badge-rol').textContent='Administrador';
+  document.querySelectorAll('.menu-admin').forEach(el=>el.style.display='');
+  document.querySelectorAll('.menu-usuario').forEach(el=>el.style.display='none');
+  usuarioActual=null;
+  actualizarContadores(); renderTablaEquipos(); renderTablaSuministros(); renderTablaMedicamentos(); renderTablaPersonal(); renderMatriz();
+  mostrarPagina('dashboard',document.querySelector('.nav-item'));
+}
+
+function abrirComoUsuario(u){
+  usuarioActual=u;
+  document.getElementById('pantalla-login').style.display='none';
+  document.getElementById('app-principal').style.display='block';
+  document.getElementById('badge-rol').textContent=u.nombre+' - '+u.departamento;
+  document.querySelectorAll('.menu-admin').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.menu-usuario').forEach(el=>el.style.display='');
+  const p=PERMISOS[u.departamento]||{};
+  document.getElementById('nav-med').style.display=p.medicamentos?'':'none';
+  document.getElementById('nav-equ').style.display=p.equipos?'':'none';
+  document.getElementById('nav-sum').style.display=p.suministros?'':'none';
+  document.getElementById('perf-col').value=u.numero_colegio;
+  document.getElementById('perf-nom').value=u.nombre;
+  document.getElementById('perf-dep').value=u.departamento;
+  document.getElementById('perf-tipo').value=u.tipo_usuario;
+  renderBodyUMed(); actualizarContadores();
+  mostrarPagina('dashboard',document.querySelector('.nav-item'));
+}
+
+function cerrarSesion(){
+  document.getElementById('app-principal').style.display='none';
+  document.getElementById('pantalla-login').style.display='flex';
+  document.getElementById('inp-usuario').value='';
+  document.getElementById('inp-pass').value='';
+  document.getElementById('error-login').textContent='';
+  usuarioActual=null;
+}
+
+function registrarUsuario(){
+  const col=document.getElementById('reg-col').value.trim();
+  const nom=document.getElementById('reg-nom').value.trim();
+  const tipo=document.getElementById('reg-tipo').value;
+  const dep=document.getElementById('reg-dep').value;
+  const esp=document.getElementById('reg-esp').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const msg=document.getElementById('msg-registro');
+  if(!col||!nom||!pass){ msg.style.color='var(--rojo)'; msg.textContent='Colegio, nombre y contrasena son obligatorios.'; return; }
+  if(DB.personal.find(p=>p.numero_colegio===col)){ msg.style.color='var(--rojo)'; msg.textContent='El numero de colegio ya esta registrado.'; return; }
+  DB.personal.push({numero_colegio:col,nombre:nom,tipo_usuario:tipo,departamento:dep,especialidad:esp,contrasena:pass});
+  DB.personal.sort((a,b)=>a.numero_colegio.localeCompare(b.numero_colegio));
+  msg.style.color='var(--verde-claro)'; msg.textContent='Usuario registrado exitosamente.';
+  ['reg-col','reg-nom','reg-esp','reg-pass'].forEach(id=>document.getElementById(id).value='');
+  renderTablaPersonal(); actualizarContadores();
+}
+
+function mostrarPagina(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('visible'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('activo'));
+  const pg=document.getElementById('page-'+id);
+  if(pg) pg.classList.add('visible');
+  if(el) el.classList.add('activo');
+}
+
+function actualizarContadores(){
+  document.getElementById('cnt-equipos').textContent=DB.equipos.length;
+  document.getElementById('cnt-suministros').textContent=DB.suministros.length;
+  document.getElementById('cnt-medicamentos').textContent=DB.medicamentos.length;
+  document.getElementById('cnt-personal').textContent=DB.personal.length;
+  document.getElementById('cnt-proveedores').textContent=DB.proveedores.length;
+  const al=[...DB.equipos,...DB.suministros,...DB.medicamentos].filter(i=>i.cantidad<i.nivel_minimo).length;
+  document.getElementById('cnt-alertas').textContent=al;
+  const div=document.getElementById('alerta-stock');
+  if(al>0){ div.style.display='flex'; document.getElementById('txt-alerta').innerHTML=`Hay <strong>${al} item(s)</strong> con stock por debajo del nivel minimo.`; }
+  else div.style.display='none';
+}
+
+function insertarEquipo(){
+  const cod=parseInt(document.getElementById('eq-cod').value);
+  const nom=document.getElementById('eq-nom').value.trim();
+  const fab=document.getElementById('eq-fab').value.trim();
+  const prec=parseFloat(document.getElementById('eq-prec').value)||0;
+  const cant=parseInt(document.getElementById('eq-cant').value)||0;
+  const fecha=document.getElementById('eq-fecha').value;
+  const nivel=parseInt(document.getElementById('eq-nivel').value)||0;
+  const res=document.getElementById('res-equipo');
+  if(!cod||!nom){ mostrarRes(res,'Codigo y nombre son obligatorios.',true); return; }
+  const idx=DB.equipos.findIndex(e=>e.codigo===cod);
+  const obj={codigo:cod,nombre:nom,fabricante:fab,precio:prec,cantidad:cant,fecha_ingreso:fecha,nivel_minimo:nivel};
+  if(idx>=0){ DB.equipos[idx]=obj; mostrarRes(res,`Equipo ${cod} actualizado en el BST.`,false); }
+  else{ DB.equipos.push(obj); DB.equipos.sort((a,b)=>a.codigo-b.codigo); mostrarRes(res,`Equipo ${cod} insertado en el BST.`,false); }
+  renderTablaEquipos(); actualizarContadores();
+}
+
+function buscarEquipo(){
+  const cod=parseInt(document.getElementById('eq-cod').value);
+  const res=document.getElementById('res-equipo');
+  const e=DB.equipos.find(e=>e.codigo===cod);
+  if(e) mostrarRes(res,`Codigo: ${e.codigo} | ${e.nombre} | Fab: ${e.fabricante} | Precio: Q${e.precio.toFixed(2)} | Cantidad: ${e.cantidad} | Nivel min: ${e.nivel_minimo}`,false);
+  else mostrarRes(res,`Equipo con codigo ${cod} no encontrado.`,true);
+}
+
+function eliminarEquipo(){
+  const cod=parseInt(document.getElementById('eq-cod').value);
+  const res=document.getElementById('res-equipo');
+  const idx=DB.equipos.findIndex(e=>e.codigo===cod);
+  if(idx>=0){ DB.equipos.splice(idx,1); renderTablaEquipos(); actualizarContadores(); mostrarRes(res,`Equipo ${cod} eliminado del BST.`,false); }
+  else mostrarRes(res,`Equipo ${cod} no encontrado.`,true);
+}
+
+function verRecorridoBST(){
+  const tipo=document.getElementById('eq-recorrido').value;
+  let lista=[...DB.equipos].sort((a,b)=>a.codigo-b.codigo);
+  if(tipo==='preorden') lista=recPre(lista);
+  else if(tipo==='postorden') lista=recPost(lista);
+  alert('Recorrido BST - '+tipo.toUpperCase()+'\n\n'+(lista.map(e=>`[${e.codigo}] ${e.nombre} (x${e.cantidad})`).join('\n')||'(arbol vacio)'));
+}
+
+function insertarSuministro(){
+  const cod=parseInt(document.getElementById('su-cod').value);
+  const nom=document.getElementById('su-nom').value.trim();
+  const fab=document.getElementById('su-fab').value.trim();
+  const prec=parseFloat(document.getElementById('su-prec').value)||0;
+  const cant=parseInt(document.getElementById('su-cant').value)||0;
+  const fecha=document.getElementById('su-fecha').value;
+  const nivel=parseInt(document.getElementById('su-nivel').value)||0;
+  const res=document.getElementById('res-suministro');
+  if(!cod||!nom){ mostrarRes(res,'Codigo y nombre son obligatorios.',true); return; }
+  const idx=DB.suministros.findIndex(s=>s.codigo===cod);
+  const obj={codigo:cod,nombre:nom,fabricante:fab,precio:prec,cantidad:cant,fecha_vencimiento:fecha,nivel_minimo:nivel};
+  if(idx>=0){ DB.suministros[idx]=obj; mostrarRes(res,`Suministro ${cod} actualizado.`,false); }
+  else{ DB.suministros.push(obj); DB.suministros.sort((a,b)=>a.codigo-b.codigo); mostrarRes(res,`Suministro ${cod} insertado en Arbol B.`,false); }
+  renderTablaSuministros(); actualizarContadores();
+}
+
+function buscarSuministro(){
+  const cod=parseInt(document.getElementById('su-cod').value);
+  const res=document.getElementById('res-suministro');
+  const s=DB.suministros.find(s=>s.codigo===cod);
+  if(s){ const al=s.cantidad<s.nivel_minimo?' - STOCK BAJO':''; mostrarRes(res,`Codigo: ${s.codigo} | ${s.nombre} | Fab: ${s.fabricante} | Cant: ${s.cantidad} | Vence: ${s.fecha_vencimiento}${al}`,s.cantidad<s.nivel_minimo); }
+  else mostrarRes(res,`Suministro ${cod} no encontrado.`,true);
+}
+
+function eliminarSuministro(){
+  const cod=parseInt(document.getElementById('su-cod').value);
+  const res=document.getElementById('res-suministro');
+  const idx=DB.suministros.findIndex(s=>s.codigo===cod);
+  if(idx>=0){ DB.suministros.splice(idx,1); renderTablaSuministros(); actualizarContadores(); mostrarRes(res,`Suministro ${cod} eliminado del Arbol B.`,false); }
+  else mostrarRes(res,`Suministro ${cod} no encontrado.`,true);
+}
+
+function verRecorridoB(){
+  const lista=[...DB.suministros].sort((a,b)=>a.codigo-b.codigo);
+  alert('Recorrido Arbol B - IN-ORDEN\n\n'+(lista.map(s=>`[${s.codigo}] ${s.nombre} (x${s.cantidad})`).join('\n')||'(arbol vacio)'));
+}
+
+function buscarPersonal(){
+  const col=document.getElementById('avl-buscar').value.trim();
+  const res=document.getElementById('res-personal');
+  const u=DB.personal.find(p=>p.numero_colegio===col);
+  if(u) mostrarRes(res,`${u.numero_colegio} | ${u.nombre} | ${u.tipo_usuario} | ${u.departamento} | ${u.especialidad||'-'}`,false);
+  else mostrarRes(res,`Usuario ${col} no encontrado en el AVL.`,true);
+}
+
+function eliminarPersonal(){
+  const col=document.getElementById('avl-buscar').value.trim();
+  const res=document.getElementById('res-personal');
+  const idx=DB.personal.findIndex(p=>p.numero_colegio===col);
+  if(idx>=0){ DB.personal.splice(idx,1); renderTablaPersonal(); actualizarContadores(); mostrarRes(res,`Usuario ${col} eliminado del AVL.`,false); }
+  else mostrarRes(res,`Usuario ${col} no encontrado.`,true);
+}
+
+function verRecorridoAVL(){
+  const tipo=document.getElementById('avl-recorrido').value;
+  let lista=[...DB.personal].sort((a,b)=>a.numero_colegio.localeCompare(b.numero_colegio));
+  if(tipo==='preorden') lista=recPre(lista);
+  if(tipo==='postorden') lista=recPost(lista);
+  alert('Recorrido AVL - '+tipo.toUpperCase()+'\n\n'+(lista.map(u=>`${u.numero_colegio} - ${u.nombre} (${u.tipo_usuario})`).join('\n')||'(vacio)'));
+}
+
+function filtrarPersonal(){ renderTablaPersonal(document.getElementById('avl-filtro').value||null); }
+
+function recPre(l){ if(l.length<=1)return l; const m=Math.floor(l.length/2); return[l[m],...recPre(l.slice(0,m)),...recPre(l.slice(m+1))]; }
+function recPost(l){ if(l.length<=1)return l; const m=Math.floor(l.length/2); return[...recPost(l.slice(0,m)),...recPost(l.slice(m+1)),l[m]]; }
+
+function cargarInventarioJSON(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const log=document.getElementById('log-inv');
+    let datos; try{datos=JSON.parse(e.target.result);}catch(err){log.textContent='Error al parsear JSON: '+err;return;}
+    if(!datos.proveedor){log.textContent='El JSON no tiene la clave "proveedor".';return;}
+    let exitosos=0,errores=0,msgs=[],warns=[];
+    datos.proveedor.forEach(prov=>{
+      if(!prov.nit||!prov.nombre){warns.push('Proveedor sin NIT o nombre, se omite.');return;}
+      if(!DB.proveedores.find(p=>p.nit===prov.nit)) DB.proveedores.push({nit:prov.nit,nombre:prov.nombre,telefono:prov.telefono||'',direccion:prov.direccion||''});
+      (prov.entrega||[]).forEach(item=>{
+        if(!item.tipo||!item.codigo||!item.nombre){warns.push(`Item sin tipo/codigo/nombre en ${prov.nombre}, se omite.`);errores++;return;}
+        if(!item.cantidad||item.cantidad<=0){warns.push(`Item codigo ${item.codigo} con cantidad invalida, se omite.`);errores++;return;}
+        const cod=parseInt(item.codigo),fab=item.fabricante||'',prec=item.precio_unitario||0,cant=item.cantidad,nivel=item.nivel_minimo||0;
+        if(item.tipo==='MEDICAMENTO'){
+          const idx=DB.medicamentos.findIndex(m=>m.codigo===cod);
+          const obj={codigo:cod,nombre:item.nombre,principio_activo:item.principio_activo||'',fabricante:fab,precio:prec,cantidad:cant,fecha_vencimiento:item.fecha_vencimiento||'',nivel_minimo:nivel};
+          if(idx>=0)DB.medicamentos[idx]=obj;else DB.medicamentos.push(obj);
+          DB.medicamentos.sort((a,b)=>a.codigo-b.codigo);
+          msgs.push(`MED ${cod} '${item.nombre}' insertado.`);exitosos++;
+        }else if(item.tipo==='EQUIPO'){
+          const idx=DB.equipos.findIndex(eq=>eq.codigo===cod);
+          const obj={codigo:cod,nombre:item.nombre,fabricante:fab,precio:prec,cantidad:cant,fecha_ingreso:item.fecha_ingreso||'',nivel_minimo:nivel};
+          if(idx>=0)DB.equipos[idx]=obj;else DB.equipos.push(obj);
+          DB.equipos.sort((a,b)=>a.codigo-b.codigo);
+          msgs.push(`EQU ${cod} '${item.nombre}' insertado en BST.`);exitosos++;
+        }else if(item.tipo==='SUMINISTRO'){
+          const idx=DB.suministros.findIndex(s=>s.codigo===cod);
+          const obj={codigo:cod,nombre:item.nombre,fabricante:fab,precio:prec,cantidad:cant,fecha_vencimiento:item.fecha_vencimiento||'',nivel_minimo:nivel};
+          if(idx>=0)DB.suministros[idx]=obj;else DB.suministros.push(obj);
+          DB.suministros.sort((a,b)=>a.codigo-b.codigo);
+          msgs.push(`SUM ${cod} '${item.nombre}' insertado en Arbol B.`);exitosos++;
+        }else{warns.push(`Tipo desconocido '${item.tipo}' para codigo ${item.codigo}, se omite.`);errores++;return;}
+        if(fab){const k=`${prov.nit}|${fab}`;DB.matriz[k]=(DB.matriz[k]||0)+cant;}
+      });
+    });
+    log.textContent=`=== Resultados ===\nExitosos: ${exitosos}\nErrores: ${errores}\n\n--- Mensajes ---\n${msgs.join('\n')}\n\n--- Advertencias ---\n${warns.join('\n')||'Ninguna'}`;
+    renderTablaEquipos();renderTablaSuministros();renderTablaMedicamentos();renderMatriz();actualizarContadores();
+  };
+  reader.readAsText(file);
+}
+
+function cargarUsuariosJSON(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const log=document.getElementById('log-usr');
+    let datos;try{datos=JSON.parse(e.target.result);}catch(err){log.textContent='Error al parsear JSON: '+err;return;}
+    if(!datos.usuarios){log.textContent='El JSON no tiene la clave "usuarios".';return;}
+    let exitosos=0,errores=0,msgs=[],warns=[];
+    datos.usuarios.forEach(u=>{
+      if(!u.numero_colegio||!u.nombre_completo||!u.tipo_usuario||!u.departamento){warns.push(`Usuario sin datos completos (col=${u.numero_colegio||'?'}), se omite.`);errores++;return;}
+      if(DB.personal.find(p=>p.numero_colegio===u.numero_colegio)){warns.push(`Usuario ${u.numero_colegio} ya existe en AVL (ID duplicado), se omite.`);errores++;return;}
+      DB.personal.push({numero_colegio:u.numero_colegio,nombre:u.nombre_completo,tipo_usuario:u.tipo_usuario,departamento:u.departamento,especialidad:u.especialidad||'',contrasena:u.contrasena||''});
+      msgs.push(`Usuario ${u.numero_colegio} '${u.nombre_completo}' insertado en AVL.`);exitosos++;
+    });
+    DB.personal.sort((a,b)=>a.numero_colegio.localeCompare(b.numero_colegio));
+    log.textContent=`=== Carga de Usuarios ===\nExitosos: ${exitosos}\nErrores: ${errores}\n\n${msgs.join('\n')}\n\n--- Advertencias ---\n${warns.join('\n')||'Ninguna'}`;
+    renderTablaPersonal();actualizarContadores();
+  };
+  reader.readAsText(file);
+}
+
+function renderTablaEquipos(){
+  document.getElementById('body-equipos').innerHTML='';
+  [...DB.equipos].sort((a,b)=>a.codigo-b.codigo).forEach(e=>{
+    const est=e.cantidad<e.nivel_minimo?'<span class="badge badge-alerta">BAJO STOCK</span>':'<span class="badge badge-ok">OK</span>';
+    document.getElementById('body-equipos').innerHTML+=`<tr><td><code>${e.codigo}</code></td><td>${e.nombre}</td><td>${e.fabricante}</td><td>Q${e.precio.toFixed(2)}</td><td>${e.cantidad}</td><td>${e.fecha_ingreso}</td><td>${e.nivel_minimo}</td><td>${est}</td></tr>`;
+  });
+}
+
+function renderTablaSuministros(){
+  document.getElementById('body-suministros').innerHTML='';
+  [...DB.suministros].sort((a,b)=>a.codigo-b.codigo).forEach(s=>{
+    const est=s.cantidad<s.nivel_minimo?'<span class="badge badge-alerta">BAJO STOCK</span>':'<span class="badge badge-ok">OK</span>';
+    document.getElementById('body-suministros').innerHTML+=`<tr><td><code>${s.codigo}</code></td><td>${s.nombre}</td><td>${s.fabricante}</td><td>Q${s.precio.toFixed(2)}</td><td>${s.cantidad}</td><td>${s.fecha_vencimiento}</td><td>${s.nivel_minimo}</td><td>${est}</td></tr>`;
+  });
+}
+
+function renderTablaMedicamentos(){
+  document.getElementById('body-medicamentos').innerHTML='';
+  [...DB.medicamentos].sort((a,b)=>a.codigo-b.codigo).forEach(m=>{
+    const est=m.cantidad<m.nivel_minimo?'<span class="badge badge-alerta">BAJO STOCK</span>':'<span class="badge badge-ok">OK</span>';
+    document.getElementById('body-medicamentos').innerHTML+=`<tr><td><code>${m.codigo}</code></td><td>${m.nombre}</td><td>${m.principio_activo}</td><td>${m.fabricante}</td><td>Q${m.precio.toFixed(2)}</td><td>${m.cantidad}</td><td>${m.fecha_vencimiento}</td><td>${m.nivel_minimo}</td><td>${est}</td></tr>`;
+  });
+}
+
+function renderTablaPersonal(filtro){
+  document.getElementById('body-personal').innerHTML='';
+  [...DB.personal].sort((a,b)=>a.numero_colegio.localeCompare(b.numero_colegio)).filter(u=>!filtro||u.departamento===filtro).forEach(u=>{
+    const tc={'TIPO-01':'badge-tipo01','TIPO-02':'badge-tipo02','TIPO-03':'badge-tipo03','TIPO-04':'badge-tipo04'}[u.tipo_usuario]||'';
+    document.getElementById('body-personal').innerHTML+=`<tr><td><code>${u.numero_colegio}</code></td><td>${u.nombre}</td><td><span class="badge ${tc}">${u.tipo_usuario}</span></td><td><span class="badge badge-dep">${u.departamento}</span></td><td>${u.especialidad||'-'}</td></tr>`;
+  });
+}
+
+function renderMatriz(){
+  const provs=[...new Set(Object.keys(DB.matriz).map(k=>k.split('|')[0]))];
+  const fabs=[...new Set(Object.keys(DB.matriz).map(k=>k.split('|')[1]))].sort();
+  if(!provs.length){document.getElementById('body-matriz').innerHTML='<tr><td style="padding:18px;color:#9ca3af">Cargue inventario primero.</td></tr>';return;}
+  document.getElementById('head-matriz').innerHTML='<tr><th>Proveedor</th>'+fabs.map(f=>`<th>${f}</th>`).join('')+'</tr>';
+  document.getElementById('body-matriz').innerHTML='';
+  provs.forEach(nit=>{
+    const prov=DB.proveedores.find(p=>p.nit===nit);
+    const nom=prov?prov.nombre:nit;
+    const celdas=fabs.map(f=>{ const v=DB.matriz[`${nit}|${f}`]||0; return v>0?`<td class="celda-valor">${v}</td>`:`<td class="celda-cero">-</td>`; }).join('');
+    document.getElementById('body-matriz').innerHTML+=`<tr><td><b>${nom}</b></td>${celdas}</tr>`;
+  });
+}
+
+function renderBodyUMed(){
+  document.getElementById('body-u-med').innerHTML='';
+  DB.medicamentos.forEach(m=>{
+    const est=m.cantidad<m.nivel_minimo?'<span class="badge badge-alerta">BAJO STOCK</span>':'<span class="badge badge-ok">OK</span>';
+    document.getElementById('body-u-med').innerHTML+=`<tr><td><code>${m.codigo}</code></td><td>${m.nombre}</td><td>${m.principio_activo}</td><td>${m.cantidad}</td><td>${m.fecha_vencimiento}</td><td>${est}</td></tr>`;
+  });
+}
+
+function usuarioBuscarMed(){
+  const cod=parseInt(document.getElementById('u-med-cod').value);
+  const res=document.getElementById('res-u-med');
+  const m=DB.medicamentos.find(m=>m.codigo===cod);
+  if(m){ const al=m.cantidad<m.nivel_minimo?' - STOCK BAJO DEL NIVEL MINIMO':''; mostrarRes(res,`${m.nombre} | Principio: ${m.principio_activo} | Cantidad: ${m.cantidad} | Vence: ${m.fecha_vencimiento}${al}`,m.cantidad<m.nivel_minimo); }
+  else mostrarRes(res,`Medicamento codigo ${cod} no encontrado.`,true);
+}
+
+function usuarioBuscarEquipo(){
+  const cod=parseInt(document.getElementById('u-eq-cod').value);
+  const res=document.getElementById('res-u-eq');
+  const e=DB.equipos.find(e=>e.codigo===cod);
+  if(e) mostrarRes(res,`${e.nombre} | Fab: ${e.fabricante} | Precio: Q${e.precio.toFixed(2)} | Cantidad: ${e.cantidad} | Ingreso: ${e.fecha_ingreso}`,false);
+  else mostrarRes(res,`Equipo codigo ${cod} no encontrado.`,true);
+}
+
+function usuarioBuscarSuministro(){
+  const cod=parseInt(document.getElementById('u-su-cod').value);
+  const res=document.getElementById('res-u-su');
+  const s=DB.suministros.find(s=>s.codigo===cod);
+  if(s){ const al=s.cantidad<s.nivel_minimo?' - STOCK BAJO DEL NIVEL MINIMO':''; mostrarRes(res,`${s.nombre} | Fab: ${s.fabricante} | Cantidad: ${s.cantidad} | Vence: ${s.fecha_vencimiento}${al}`,s.cantidad<s.nivel_minimo); }
+  else mostrarRes(res,`Suministro codigo ${cod} no encontrado.`,true);
+}
+
+function guardarPerfil(){
+  if(!usuarioActual)return;
+  const nom=document.getElementById('perf-nom').value.trim();
+  const pass=document.getElementById('perf-pass').value;
+  if(nom){ usuarioActual.nombre=nom; const u=DB.personal.find(p=>p.numero_colegio===usuarioActual.numero_colegio); if(u)u.nombre=nom; }
+  if(pass){ usuarioActual.contrasena=pass; const u=DB.personal.find(p=>p.numero_colegio===usuarioActual.numero_colegio); if(u)u.contrasena=pass; }
+  document.getElementById('msg-perfil').textContent='Perfil actualizado correctamente.';
+}
+
+function mostrarRes(el,txt,esError){ el.textContent=txt; el.className='resultado-busqueda visible'+(esError?' error':''); }
+
+function filtrarTabla(tablaId,texto){
+  document.getElementById(tablaId).querySelectorAll('tbody tr').forEach(f=>{ f.style.display=f.textContent.toLowerCase().includes(texto.toLowerCase())?'':'none'; });
+}
+
+function svgArbol(nodos,tipo){
+  if(!nodos.length)return'<p style="padding:20px;color:#9ca3af">No hay datos para mostrar.</p>';
+  const W=130,H=65,niveles=Math.ceil(Math.log2(nodos.length+1));
+  const ancho=Math.pow(2,niveles-1)*(W+50)+60,alto=niveles*(H+90)+60;
+  let svg=`<svg viewBox="0 0 ${ancho} ${alto}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;font-family:Roboto,Arial">`;
+  svg+=`<text x="${ancho/2}" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a4f8a">Arbol ${tipo}</text>`;
+  const px=(nv,pos)=>(pos+0.5)*ancho/Math.pow(2,nv);
+  const py=nv=>40+nv*(H+90);
+  function draw(idx,nv,pos){
+    if(idx>=nodos.length)return;
+    const n=nodos[idx],cx=px(nv,pos),cy=py(nv),izq=2*idx+1,der=2*idx+2,r=tipo==='AVL'?26:0;
+    if(izq<nodos.length){svg+=`<line x1="${cx}" y1="${cy+(r||H/2)}" x2="${px(nv+1,pos*2)}" y2="${py(nv+1)-(r||H/2)}" stroke="#d1d5db" stroke-width="1.5"/>`;draw(izq,nv+1,pos*2);}
+    if(der<nodos.length){svg+=`<line x1="${cx}" y1="${cy+(r||H/2)}" x2="${px(nv+1,pos*2+1)}" y2="${py(nv+1)-(r||H/2)}" stroke="#d1d5db" stroke-width="1.5"/>`;draw(der,nv+1,pos*2+1);}
+    if(tipo==='AVL'){
+      svg+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#4fc3f7" stroke="#0288d1" stroke-width="1.5"/>`;
+      svg+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="8" fill="white" font-weight="bold">${n.numero_colegio}</text>`;
+      svg+=`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="7.5" fill="white">${(n.nombre||'').split(' ')[0]}</text>`;
+      svg+=`<text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="7" fill="#e3f2fd">${n.tipo_usuario||''}</text>`;
+    }else{
+      svg+=`<rect x="${cx-W/2}" y="${cy-H/2}" width="${W}" height="${H}" rx="4" fill="#a5d6a7" stroke="#388e3c" stroke-width="1.5"/>`;
+      svg+=`<text x="${cx}" y="${cy-18}" text-anchor="middle" font-size="10" fill="#1b5e20" font-weight="bold">Cod: ${n.codigo}</text>`;
+      svg+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="9" fill="#2e7d32">${(n.nombre||'').substring(0,16)}</text>`;
+      svg+=`<text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="8" fill="#388e3c">x${n.cantidad}</text>`;
+      svg+=`<text x="${cx}" y="${cy+26}" text-anchor="middle" font-size="7" fill="#555">${(n.fabricante||'').substring(0,14)}</text>`;
+    }
+  }
+  draw(0,0,0);svg+='</svg>';return svg;
+}
+
+function svgLista(items,tipo){
+  if(!items.length)return'<p style="padding:20px;color:#9ca3af">No hay datos.</p>';
+  const W=150,H=65,GAP=35,color=tipo==='prov'?'#ffcc80':'#ce93d8',borde=tipo==='prov'?'#e65100':'#7b1fa2';
+  const ancho=items.length*(W+GAP)+GAP,alto=160;
+  let svg=`<svg viewBox="0 0 ${ancho} ${alto}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;font-family:Roboto,Arial">`;
+  svg+=`<text x="${ancho/2}" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="${borde}">${tipo==='prov'?'Lista Circular Doble - Proveedores':'Lista Doble - Medicamentos'}</text>`;
+  items.forEach((item,i)=>{
+    const x=GAP+i*(W+GAP),y=30;
+    svg+=`<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="4" fill="${color}" stroke="${borde}" stroke-width="1.5"/>`;
+    if(tipo==='prov'){
+      svg+=`<text x="${x+W/2}" y="${y+16}" text-anchor="middle" font-size="9" font-weight="bold" fill="#e65100">${item.nit}</text>`;
+      svg+=`<text x="${x+W/2}" y="${y+30}" text-anchor="middle" font-size="9" fill="#333">${(item.nombre||'').substring(0,18)}</text>`;
+      svg+=`<text x="${x+W/2}" y="${y+46}" text-anchor="middle" font-size="8" fill="#555">${item.telefono||''}</text>`;
+    }else{
+      svg+=`<text x="${x+W/2}" y="${y+16}" text-anchor="middle" font-size="9" font-weight="bold" fill="#4a148c">Cod: ${item.codigo}</text>`;
+      svg+=`<text x="${x+W/2}" y="${y+30}" text-anchor="middle" font-size="9" fill="#333">${(item.nombre||'').substring(0,18)}</text>`;
+      svg+=`<text x="${x+W/2}" y="${y+46}" text-anchor="middle" font-size="8" fill="#555">x${item.cantidad}</text>`;
+    }
+    if(i<items.length-1){
+      svg+=`<line x1="${x+W}" y1="${y+22}" x2="${x+W+GAP}" y2="${y+22}" stroke="${borde}" stroke-width="1.5" marker-end="url(#arr)"/>`;
+      svg+=`<line x1="${x+W+GAP}" y1="${y+43}" x2="${x+W}" y2="${y+43}" stroke="${borde}" stroke-width="1.5" marker-end="url(#arr2)"/>`;
+    }
+  });
+  svg+=`<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${borde}"/></marker><marker id="arr2" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="${borde}"/></marker></defs></svg>`;
+  return svg;
+}
+
+function svgArbolB(){
+  const lista=[...DB.suministros].sort((a,b)=>a.codigo-b.codigo);
+  if(!lista.length)return'<p style="padding:20px;color:#9ca3af">No hay suministros.</p>';
+  const maxK=3,W=100;
+  const nodos=[];for(let i=0;i<lista.length;i+=maxK)nodos.push(lista.slice(i,i+maxK));
+  const cols=Math.min(nodos.length,4),rows=Math.ceil(nodos.length/cols);
+  const ancho=cols*(maxK*W+50)+50,alto=rows*100+60;
+  let svg=`<svg viewBox="0 0 ${ancho} ${alto}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;font-family:Roboto,Arial">`;
+  svg+=`<text x="${ancho/2}" y="22" text-anchor="middle" font-size="13" font-weight="bold" fill="#d97706">Arbol B Orden 4 - Suministros</text>`;
+  nodos.forEach((nodo,ni)=>{
+    const col=ni%cols,row=Math.floor(ni/cols),x0=50+col*(maxK*W+50),y0=40+row*100;
+    const nw=nodo.length*W,color=nodo.length===maxK?'#fef3c7':'#dcfce7',borde=nodo.length===maxK?'#d97706':'#16a34a';
+    svg+=`<rect x="${x0}" y="${y0}" width="${nw}" height="65" rx="4" fill="${color}" stroke="${borde}" stroke-width="2"/>`;
+    nodo.forEach((item,ii)=>{
+      const cx=x0+ii*W+W/2;
+      if(ii>0)svg+=`<line x1="${x0+ii*W}" y1="${y0}" x2="${x0+ii*W}" y2="${y0+65}" stroke="${borde}" stroke-width="1"/>`;
+      svg+=`<text x="${cx}" y="${y0+18}" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">Cod: ${item.codigo}</text>`;
+      svg+=`<text x="${cx}" y="${y0+34}" text-anchor="middle" font-size="9" fill="#333">${(item.nombre||'').substring(0,12)}</text>`;
+      svg+=`<text x="${cx}" y="${y0+50}" text-anchor="middle" font-size="8" fill="#555">x${item.cantidad}</text>`;
+    });
+    svg+=`<text x="${x0+nw+5}" y="${y0+38}" font-size="8" fill="#9ca3af">${nodo.length}/${maxK}</text>`;
+  });
+  svg+='</svg>';return svg;
+}
+
+function reporteAVL(){ const lista=[...DB.personal].sort((a,b)=>a.numero_colegio.localeCompare(b.numero_colegio)); const area=document.getElementById('area-reporte');area.style.display='block';area.innerHTML=svgArbol(lista,'AVL'); }
+function reporteBST(){ const lista=[...DB.equipos].sort((a,b)=>a.codigo-b.codigo); const area=document.getElementById('area-reporte');area.style.display='block';area.innerHTML=svgArbol(lista,'BST'); }
+function reporteArbolB(){ const area=document.getElementById('area-reporte');area.style.display='block';area.innerHTML=svgArbolB(); }
+function reporteMatriz(){ mostrarPagina('matriz',null); }
+function reporteMed(){ const area=document.getElementById('area-reporte');area.style.display='block';area.innerHTML=svgLista([...DB.medicamentos].sort((a,b)=>a.codigo-b.codigo),'med'); }
+function reporteProv(){ const area=document.getElementById('area-reporte');area.style.display='block';area.innerHTML=svgLista(DB.proveedores,'prov'); }
+</script>
+</body>
+</html>

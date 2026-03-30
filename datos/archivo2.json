@@ -1,0 +1,108 @@
+{
+    "usuarios": [
+        {
+            "numero_colegio": "COL-00051",
+            "nombre_completo": "Ana Ramírez",
+            "tipo_usuario": "TIPO-01",
+            "departamento": "DEP-MED",
+            "especialidad": "Medicina General",
+            "contrasena": "medgen2026"
+        },
+        {
+            "numero_colegio": "COL-00020",
+            "nombre_completo": "Rootberto Raiz",
+            "tipo_usuario": "TIPO-03",
+            "departamento": "DEP-MED",
+            "especialidad": "Cirugía Cardiovascular",
+            "contrasena": "cirugia2026"
+        },
+        {
+            "numero_colegio": "COL-00001",
+            "nombre_completo": "Maximo Izquierdo",
+            "tipo_usuario": "TIPO-03",
+            "departamento": "DEP-CIR",
+            "especialidad": "",
+            "contrasena": "enf2026far"
+        },
+        {
+            "numero_colegio": "COL-00073",
+            "nombre_completo": "Benito doctor",
+            "tipo_usuario": "TIPO-01",
+            "departamento": "DEP-MED",
+            "especialidad": "Romper corazones",
+            "contrasena": "enf2026med"
+        },
+        {
+            "numero_colegio": "COL-00003",
+            "nombre_completo": "Carmen López",
+            "tipo_usuario": "TIPO-03",
+            "departamento": "DEP-CIR",
+            "especialidad": null,
+            "contrasena": "enf2026cir"
+        },
+        {
+            "numero_colegio": "COL-00078",
+            "nombre_completo": "Luis miguel",
+            "tipo_usuario": "TIPO-04",
+            "departamento": "DEP-LAB",
+            "especialidad": "Hematología Clínica",
+            "contrasena": "lab2026hem"
+        },
+        {
+            "numero_colegio": "COL-00005",
+            "nombre_completo": "Casiano fuentes",
+            "tipo_usuario": "TIPO-04",
+            "departamento": "DEP-LAB",
+            "especialidad": "Microbiología",
+            "contrasena": "lab2026mic"
+        },
+        {
+            "numero_colegio": "COL-00006",
+            "nombre_completo": "Solito mequede",
+            "tipo_usuario": "TIPO-02",
+            "departamento": "DEP-CIR",
+            "especialidad": "cerebros",
+            "contrasena": "adm2026med"
+        },
+        {
+            "numero_colegio": "COL-00089",
+            "nombre_completo": "Maximo Derecho",
+            "tipo_usuario": "TIPO-03",
+            "departamento": "DEP-CIR",
+            "especialidad": "revivir",
+            "contrasena": "adm2026cir"
+        },
+        {
+            "numero_colegio": "COL-00018",
+            "nombre_completo": "Yano Salomon",
+            "tipo_usuario": "TIPO-02",
+            "departamento": "DEP-CIR",
+            "especialidad": null,
+            "contrasena": "adm2026cir"
+        },
+        {
+            "numero_colegio": "COL-00048",
+            "nombre_completo": "Jose Jose",
+            "tipo_usuario": "TIPO-03",
+            "departamento": "DEP-FAR",
+            "especialidad": null,
+            "contrasena": "adm2026cir"
+        },
+        {
+            "numero_colegio": "COL-00073",
+            "nombre_completo": "Erronio Crontolado??",
+            "tipo_usuario": "TIPO-02",
+            "departamento": "DEP-CIR",
+            "especialidad": "ID duplicado - no deferia registrarse",
+            "contrasena": "adm2026cir"
+        },
+        {
+            "numero_colegio": "COL-00010",
+            "nombre_completo": "Bruce willis",
+            "tipo_usuario": "TIPO-04",
+            "departamento": "DEP-LAB",
+            "especialidad": null,
+            "contrasena": "adm2026cir"
+        }
+    ]
+}
